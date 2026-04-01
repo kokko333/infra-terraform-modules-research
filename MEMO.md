@@ -30,11 +30,12 @@
   $ terraform workspace show
   $ terraform workspace list
 
-※　default ワークスペースとそれ以外のワークスペースで、リモートステートファイルの置き場所が異なる。・defaultの場合
-s3::[backend S3名] / [ terraform文で指定したプレフィックス ] / terraform.tfstate
+※　default ワークスペースとそれ以外のワークスペースで、リモートステートファイルの置き場所が異なる。
 
+・defaultの場合
+　s3::[backend S3名] / [ terraform文で指定したプレフィックス ] / terraform.tfstate
 ・それ以外の場合
-s3::[backend S3名] / env: / [ terraform文で指定したプレフィックス ] / terraform.tfstate
+　s3::[backend S3名] / env: / [ terraform文で指定したプレフィックス ] / terraform.tfstate
 
 ※　workspace を切り替え忘れたまま destroy してしまうなど人為的ミスのリスクが高いので環境分離には不適
 
