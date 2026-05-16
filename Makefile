@@ -133,7 +133,7 @@ opa-check:
 
 validate: $(addprefix validate-,$(VALIDATE_TARGETS))
 
-validate-%:
+$(addprefix validate-,$(VALIDATE_TARGETS)): validate-%:
 	terraform -chdir=$(validate_path_$*) init -backend=false -input=false
 	terraform -chdir=$(validate_path_$*) validate
 
@@ -157,11 +157,11 @@ destroy-state:
 # 注意: mysql は TF_VAR_db_username / TF_VAR_db_password の設定が必要
 # =============================================================================
 
-deploy-example-%:
+$(addprefix deploy-example-,$(EXAMPLE_TARGETS)): deploy-example-%:
 	terraform -chdir=$(example_path_$*) init
 	terraform -chdir=$(example_path_$*) apply
 
-destroy-example-%:
+$(addprefix destroy-example-,$(EXAMPLE_TARGETS)): destroy-example-%:
 	terraform -chdir=$(example_path_$*) init
 	terraform -chdir=$(example_path_$*) destroy
 
@@ -176,7 +176,7 @@ test-global-modules:
 # global-modules/_tests/ 配下の個別テスト実行
 # 全実行: make test-global-modules
 # 個別実行: make test-global-alb / make test-global-asg など
-test-global-%:
+$(addprefix test-global-,$(GLOBAL_TEST_TARGETS)): test-global-%:
 	cd $(GLOBAL_TESTS) && go test -v -timeout 30m -run '^$(test_func_$*)$$' ./...
 
 # hello-world-cluster/_tests/ の各テストを個別実行
