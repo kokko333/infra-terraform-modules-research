@@ -35,20 +35,69 @@ TGRUNT_DIR   := hello-world-cluster/live/terragrunt
 GLOBAL_TESTS := global-modules/_tests
 HW_TESTS     := hello-world-cluster/_tests
 
+# =============================================================================
+# validate パターンルール設定
+# モジュール追加時: validate_path_<名前> と VALIDATE_TARGETS を編集するだけでよい
+# =============================================================================
+
+validate_path_state          := global-resources/state-management
+validate_path_alb            := global-modules/alb
+validate_path_asg            := global-modules/asg
+validate_path_mysql          := global-modules/mysql
+validate_path_network        := global-modules/network
+validate_path_example-alb    := global-modules/_examples/alb
+validate_path_example-asg    := global-modules/_examples/asg
+validate_path_example-mysql  := global-modules/_examples/mysql
+
+validate_path_hw-app         := hello-world-cluster/modules/hello-world-app
+validate_path_example-hw-app := hello-world-cluster/_examples/hello-world-app
+validate_path_native-network := hello-world-cluster/live/terraform-native/network
+validate_path_native-mysql   := hello-world-cluster/live/terraform-native/data-stores/mysql
+validate_path_native-app     := hello-world-cluster/live/terraform-native/services/hello-world-app
+
+VALIDATE_TARGETS := \
+	state \
+	alb asg mysql network \
+	example-alb example-asg example-mysql \
+	hw-app example-hw-app \
+	native-network native-mysql native-app
+
+# =============================================================================
+# deploy/destroy example パターンルール設定
+# example 追加時: example_path_<名前> と EXAMPLE_TARGETS を編集するだけでよい
+# =============================================================================
+
+example_path_asg         := global-modules/_examples/asg
+example_path_alb         := global-modules/_examples/alb
+example_path_mysql       := global-modules/_examples/mysql
+
+example_path_hello-world := hello-world-cluster/_examples/hello-world-app
+
+EXAMPLE_TARGETS := asg alb mysql hello-world
+
+# =============================================================================
+# test-global パターンルール設定
+# テスト追加時: test_func_<名前> と GLOBAL_TEST_TARGETS を編集するだけでよい
+# =============================================================================
+
+test_func_alb      := TestAlbExample
+test_func_alb-plan := TestAlbExamplePlan
+test_func_asg      := TestAsgExample
+test_func_mysql    := TestMySqlExample
+
+GLOBAL_TEST_TARGETS := alb alb-plan asg mysql
+
+# =============================================================================
+# .PHONY
+# =============================================================================
+
 .PHONY: \
 	check fmt-check fmt lint opa-check \
-	validate \
-	validate-state \
-	validate-alb validate-asg validate-mysql validate-network \
-	validate-example-alb validate-example-asg validate-example-mysql \
-	validate-hw-app validate-example-hw-app \
-	validate-native-network validate-native-mysql validate-native-app \
+	validate $(addprefix validate-,$(VALIDATE_TARGETS)) \
+	test-global-modules $(addprefix test-global-,$(GLOBAL_TEST_TARGETS)) \
 	deploy-state destroy-state \
-	deploy-example-asg    destroy-example-asg \
-	deploy-example-alb    destroy-example-alb \
-	deploy-example-mysql  destroy-example-mysql \
-	deploy-example-hello-world destroy-example-hello-world \
-	test-global-modules \
+	$(addprefix deploy-example-,$(EXAMPLE_TARGETS)) \
+	$(addprefix destroy-example-,$(EXAMPLE_TARGETS)) \
 	test-example test-integration test-integration-stages test-opa \
 	deploy-native destroy-native \
 	deploy-tg destroy-tg
@@ -76,71 +125,17 @@ lint:
 opa-check:
 	opa check global-opa/enforce_tagging.rego
 
+# =============================================================================
+# validate
+# 全実行: make validate
+# 個別実行: make validate-alb / make validate-example-alb など
+# =============================================================================
 
-# 全モジュール・example の構文検証（個別実行も可: make validate-alb など）
-validate: \
-	validate-state \
-	validate-alb validate-asg validate-mysql validate-network \
-	validate-example-alb validate-example-asg validate-example-mysql \
-	validate-hw-app validate-example-hw-app \
-	validate-native-network validate-native-mysql validate-native-app
+validate: $(addprefix validate-,$(VALIDATE_TARGETS))
 
-# --- global-resources ---
-validate-state:
-	terraform -chdir=global-resources/state-management init -backend=false -input=false
-	terraform -chdir=global-resources/state-management validate
-
-# --- global-modules (モジュール本体) ---
-validate-alb:
-	terraform -chdir=global-modules/alb init -backend=false -input=false
-	terraform -chdir=global-modules/alb validate
-
-validate-asg:
-	terraform -chdir=global-modules/asg init -backend=false -input=false
-	terraform -chdir=global-modules/asg validate
-
-validate-mysql:
-	terraform -chdir=global-modules/mysql init -backend=false -input=false
-	terraform -chdir=global-modules/mysql validate
-
-validate-network:
-	terraform -chdir=global-modules/network init -backend=false -input=false
-	terraform -chdir=global-modules/network validate
-
-# --- global-modules/_examples ---
-validate-example-alb:
-	terraform -chdir=global-modules/_examples/alb init -backend=false -input=false
-	terraform -chdir=global-modules/_examples/alb validate
-
-validate-example-asg:
-	terraform -chdir=global-modules/_examples/asg init -backend=false -input=false
-	terraform -chdir=global-modules/_examples/asg validate
-
-validate-example-mysql:
-	terraform -chdir=global-modules/_examples/mysql init -backend=false -input=false
-	terraform -chdir=global-modules/_examples/mysql validate
-
-# --- hello-world-cluster (モジュール本体 / example) ---
-validate-hw-app:
-	terraform -chdir=hello-world-cluster/modules/hello-world-app init -backend=false -input=false
-	terraform -chdir=hello-world-cluster/modules/hello-world-app validate
-
-validate-example-hw-app:
-	terraform -chdir=hello-world-cluster/_examples/hello-world-app init -backend=false -input=false
-	terraform -chdir=hello-world-cluster/_examples/hello-world-app validate
-
-# --- hello-world-cluster/live/terraform-native ---
-validate-native-network:
-	terraform -chdir=hello-world-cluster/live/terraform-native/network init -backend=false -input=false
-	terraform -chdir=hello-world-cluster/live/terraform-native/network validate
-
-validate-native-mysql:
-	terraform -chdir=hello-world-cluster/live/terraform-native/data-stores/mysql init -backend=false -input=false
-	terraform -chdir=hello-world-cluster/live/terraform-native/data-stores/mysql validate
-
-validate-native-app:
-	terraform -chdir=hello-world-cluster/live/terraform-native/services/hello-world-app init -backend=false -input=false
-	terraform -chdir=hello-world-cluster/live/terraform-native/services/hello-world-app validate
+validate-%:
+	terraform -chdir=$(validate_path_$*) init -backend=false -input=false
+	terraform -chdir=$(validate_path_$*) validate
 
 # =============================================================================
 # state 管理リソース (S3 バケット + DynamoDB テーブル)
@@ -157,40 +152,18 @@ destroy-state:
 
 # =============================================================================
 # examples — 個別デプロイ / 削除
+# deploy: make deploy-example-alb / make deploy-example-asg など
+# destroy: make destroy-example-alb / make destroy-example-asg など
+# 注意: mysql は TF_VAR_db_username / TF_VAR_db_password の設定が必要
 # =============================================================================
 
-deploy-example-asg:
-	terraform -chdir=global-modules/_examples/asg init
-	terraform -chdir=global-modules/_examples/asg apply
+deploy-example-%:
+	terraform -chdir=$(example_path_$*) init
+	terraform -chdir=$(example_path_$*) apply
 
-destroy-example-asg:
-	terraform -chdir=global-modules/_examples/asg init
-	terraform -chdir=global-modules/_examples/asg destroy
-
-deploy-example-alb:
-	terraform -chdir=global-modules/_examples/alb init
-	terraform -chdir=global-modules/_examples/alb apply
-
-destroy-example-alb:
-	terraform -chdir=global-modules/_examples/alb init
-	terraform -chdir=global-modules/_examples/alb destroy
-
-# TF_VAR_db_username / TF_VAR_db_password の設定が必要
-deploy-example-mysql:
-	terraform -chdir=global-modules/_examples/mysql init
-	terraform -chdir=global-modules/_examples/mysql apply
-
-destroy-example-mysql:
-	terraform -chdir=global-modules/_examples/mysql init
-	terraform -chdir=global-modules/_examples/mysql destroy
-
-deploy-example-hello-world:
-	terraform -chdir=hello-world-cluster/_examples/hello-world-app init
-	terraform -chdir=hello-world-cluster/_examples/hello-world-app apply
-
-destroy-example-hello-world:
-	terraform -chdir=hello-world-cluster/_examples/hello-world-app init
-	terraform -chdir=hello-world-cluster/_examples/hello-world-app destroy
+destroy-example-%:
+	terraform -chdir=$(example_path_$*) init
+	terraform -chdir=$(example_path_$*) destroy
 
 # =============================================================================
 # テスト
@@ -199,6 +172,12 @@ destroy-example-hello-world:
 # global-modules/_tests/ 配下の全テストを一括実行
 test-global-modules:
 	cd $(GLOBAL_TESTS) && go test -v -timeout 30m ./...
+
+# global-modules/_tests/ 配下の個別テスト実行
+# 全実行: make test-global-modules
+# 個別実行: make test-global-alb / make test-global-asg など
+test-global-%:
+	cd $(GLOBAL_TESTS) && go test -v -timeout 30m -run '^$(test_func_$*)$$' ./...
 
 # hello-world-cluster/_tests/ の各テストを個別実行
 test-example:
