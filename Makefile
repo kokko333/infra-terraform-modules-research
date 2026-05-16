@@ -103,7 +103,7 @@ GLOBAL_TEST_TARGETS := network network-plan alb alb-plan asg mysql
 # =============================================================================
 
 .PHONY: \
-	check-state \
+	check-state check-state-sh \
 	check fmt-check fmt lint opa-check \
 	validate $(addprefix validate-,$(VALIDATE_TARGETS)) \
 	test-global-modules $(addprefix test-global-,$(GLOBAL_TEST_TARGETS)) \
@@ -117,10 +117,12 @@ GLOBAL_TEST_TARGETS := network network-plan alb alb-plan asg mysql
 # =============================================================================
 # state チェック
 # S3 の全 .tfstate をスキャンし、リソースが残存しているものを報告する
-# 前提: AWS 認証情報が設定済みであること
 # =============================================================================
 
-check-state:
+check-state: # Windows PowerShell 版
+	powershell -ExecutionPolicy Bypass -File scripts/check-state.ps1
+
+check-state-sh: # Linux / macOS Bash 版
 	bash scripts/check-state.sh
 
 # =============================================================================
