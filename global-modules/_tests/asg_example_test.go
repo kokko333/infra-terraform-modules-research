@@ -11,10 +11,21 @@ import (
 func TestAsgExample(t *testing.T) {
 	t.Parallel()
 
+	uniqueId := random.UniqueId()
+
 	terraformOptions := &terraform.Options{
 		TerraformDir: "../_examples/asg",
+		Reconfigure:  true,
+
 		Vars: map[string]interface{}{
-			"cluster_name": fmt.Sprintf("test-%s", random.UniqueId()),
+			"cluster_name": fmt.Sprintf("test-%s", uniqueId),
+		},
+
+		BackendConfig: map[string]interface{}{
+			"bucket":  TerraformStateBucket,
+			"region":  TerraformStateRegion,
+			"key":     fmt.Sprintf("%s/%s/asg/terraform.tfstate", t.Name(), uniqueId),
+			"encrypt": true,
 		},
 	}
 

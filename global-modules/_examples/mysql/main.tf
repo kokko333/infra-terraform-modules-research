@@ -7,6 +7,10 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "s3" {
+    key = "global-modules/examples/mysql/terraform.tfstate"
+  }
 }
 
 provider "aws" {

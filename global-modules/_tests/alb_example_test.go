@@ -17,13 +17,22 @@ func TestAlbExample(t *testing.T) {
 
 	t.Parallel()
 
+	uniqueId := random.UniqueId()
+
 	opts := &terraform.Options{
 		TerraformDir: "../_examples/alb",
+		Reconfigure:  true,
 
 		Vars: map[string]interface{}{
-			"alb_name": fmt.Sprintf("test-%s", random.UniqueId()),
+			"alb_name": fmt.Sprintf("test-%s", uniqueId),
 		},
 
+		BackendConfig: map[string]interface{}{
+			"bucket":  TerraformStateBucket,
+			"region":  TerraformStateRegion,
+			"key":     fmt.Sprintf("%s/%s/alb/terraform.tfstate", t.Name(), uniqueId),
+			"encrypt": true,
+		},
 	}
 
 	// テスト終了時にリソースをすべて削除する
@@ -57,14 +66,22 @@ func TestAlbExample(t *testing.T) {
 func TestAlbExamplePlan(t *testing.T) {
 	t.Parallel()
 
-	albName := fmt.Sprintf("test-%s", random.UniqueId())
+	uniqueId := random.UniqueId()
+	albName := fmt.Sprintf("test-%s", uniqueId)
 
 	opts := &terraform.Options{
 		TerraformDir: "../_examples/alb",
+		Reconfigure:  true,
+		NoColor:      true, // ANSIコードで GetResourceCount の正規表現がマッチしない問題が発生したため設定
 		Vars: map[string]interface{}{
 			"alb_name": albName,
 		},
-		NoColor: true, // ANSIコードで GetResourceCount の正規表現がマッチしない問題が発生したため設定
+		BackendConfig: map[string]interface{}{
+			"bucket":  TerraformStateBucket,
+			"region":  TerraformStateRegion,
+			"key":     fmt.Sprintf("%s/%s/alb/terraform.tfstate", t.Name(), uniqueId),
+			"encrypt": true,
+		},
 	}
 
 	planString := terraform.InitAndPlan(t, opts)

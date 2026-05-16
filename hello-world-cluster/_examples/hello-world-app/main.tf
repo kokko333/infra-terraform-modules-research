@@ -7,6 +7,10 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "s3" {
+    key = "hello-world-cluster/examples/hello-world-app/terraform.tfstate"
+  }
 }
 
 provider "aws" {

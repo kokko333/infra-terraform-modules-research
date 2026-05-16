@@ -17,15 +17,25 @@ func TestHelloWorldAppExample(t *testing.T) {
 
 	t.Parallel()
 
+	uniqueId := random.UniqueId()
+
 	opts := &terraform.Options{
 		TerraformDir: "../_examples/hello-world-app",
+		Reconfigure:  true,
 
 		Vars: map[string]interface{}{
 			"mock_mysql_config": map[string]interface{}{
 				"address": "mock-value-for-test",
 				"port":    3306,
 			},
-			"environment": fmt.Sprintf("test-%s", random.UniqueId()),
+			"environment": fmt.Sprintf("test-%s", uniqueId),
+		},
+
+		BackendConfig: map[string]interface{}{
+			"bucket":  TerraformStateBucket,
+			"region":  TerraformStateRegion,
+			"key":     fmt.Sprintf("%s/%s/hello-world-app/terraform.tfstate", t.Name(), uniqueId),
+			"encrypt": true,
 		},
 	}
 

@@ -24,11 +24,8 @@
 #                         ※　sort_by(Images, &CreationDate)[-1]: 最新のものを取得
 #
 # --- test-integration / test-integration-stages 実行時 ---
-#   TEST_STATE_S3_BUCKET : テスト用 Terraform state S3 バケット名
-#   TEST_STATE_REGION    : テスト用 S3 バケットのリージョン
-#   TEST_DB_USERNAME     : RDS MySQL ユーザー名
-#   TEST_DB_PASSWORD     : RDS MySQL パスワード
 #   TEST_AMI_ID          : Ubuntu 24.04 LTS の AMI ID（上記コマンドで取得）
+#   ※ S3 バケット・リージョン・DB 認証情報はテストコードの定数 / Terraform デフォルト値を使用
 #
 # --- test-integration-stages のステージ制御 ---
 #   SKIP_<ステージ名>=true を付けると該当ステージをスキップできる
@@ -106,6 +103,7 @@ GLOBAL_TEST_TARGETS := network network-plan alb alb-plan asg mysql
 # =============================================================================
 
 .PHONY: \
+	check-state \
 	check fmt-check fmt lint opa-check \
 	validate $(addprefix validate-,$(VALIDATE_TARGETS)) \
 	test-global-modules $(addprefix test-global-,$(GLOBAL_TEST_TARGETS)) \
@@ -115,6 +113,15 @@ GLOBAL_TEST_TARGETS := network network-plan alb alb-plan asg mysql
 	test-example test-integration test-integration-stages test-opa \
 	deploy-native destroy-native \
 	deploy-tg destroy-tg
+
+# =============================================================================
+# state チェック
+# S3 の全 .tfstate をスキャンし、リソースが残存しているものを報告する
+# 前提: AWS 認証情報が設定済みであること
+# =============================================================================
+
+check-state:
+	bash scripts/check-state.sh
 
 # =============================================================================
 # 静的チェック (AWSアクセス不要)
@@ -172,11 +179,11 @@ destroy-state:
 # =============================================================================
 
 $(addprefix deploy-example-,$(EXAMPLE_TARGETS)): deploy-example-%:
-	terraform -chdir=$(example_path_$*) init
+	terraform -chdir=$(example_path_$*) init -backend-config=$(BACKEND_CONFIG)
 	terraform -chdir=$(example_path_$*) apply
 
 $(addprefix destroy-example-,$(EXAMPLE_TARGETS)): destroy-example-%:
-	terraform -chdir=$(example_path_$*) init
+	terraform -chdir=$(example_path_$*) init -backend-config=$(BACKEND_CONFIG)
 	terraform -chdir=$(example_path_$*) destroy
 
 # =============================================================================

@@ -36,15 +36,12 @@ func TestHelloWorldApp(t *testing.T) {
 }
 
 func createNetworkOpts(t *testing.T, uniqueId string, terraformDir string) *terraform.Options {
-	bucketForTesting := GetRequiredEnvVar(t, TerraformStateBucketForTestEnvVarName)
-	bucketRegionForTesting := GetRequiredEnvVar(t, TerraformStateRegionForTestEnvVarName)
-
 	return &terraform.Options{
 		TerraformDir: terraformDir,
 		Reconfigure:  true,
 		BackendConfig: map[string]interface{}{
-			"bucket":  bucketForTesting,
-			"region":  bucketRegionForTesting,
+			"bucket":  TerraformStateBucket,
+			"region":  TerraformStateRegion,
 			"key":     fmt.Sprintf("%s/%s/network/terraform.tfstate", t.Name(), uniqueId),
 			"encrypt": true,
 		},
@@ -52,9 +49,6 @@ func createNetworkOpts(t *testing.T, uniqueId string, terraformDir string) *terr
 }
 
 func createDbOpts(t *testing.T, uniqueId string, networkOpts *terraform.Options, terraformDir string) *terraform.Options {
-	bucketForTesting := GetRequiredEnvVar(t, TerraformStateBucketForTestEnvVarName)
-	bucketRegionForTesting := GetRequiredEnvVar(t, TerraformStateRegionForTestEnvVarName)
-
 	return &terraform.Options{
 		TerraformDir: terraformDir,
 		Reconfigure:  true,
@@ -66,8 +60,8 @@ func createDbOpts(t *testing.T, uniqueId string, networkOpts *terraform.Options,
 		},
 
 		BackendConfig: map[string]interface{}{
-			"bucket":  bucketForTesting,
-			"region":  bucketRegionForTesting,
+			"bucket":  TerraformStateBucket,
+			"region":  TerraformStateRegion,
 			"key":     fmt.Sprintf("%s/%s/db/terraform.tfstate", t.Name(), uniqueId),
 			"encrypt": true,
 		},

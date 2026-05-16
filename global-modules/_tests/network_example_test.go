@@ -15,10 +15,21 @@ import (
 func TestNetworkExamplePlan(t *testing.T) {
 	t.Parallel()
 
+	uniqueId := random.UniqueId()
+
 	opts := &terraform.Options{
 		TerraformDir: "../_examples/network",
+		Reconfigure:  true,
+
 		Vars: map[string]interface{}{
-			"name": fmt.Sprintf("test-%s", random.UniqueId()),
+			"name": fmt.Sprintf("test-%s", uniqueId),
+		},
+
+		BackendConfig: map[string]interface{}{
+			"bucket":  TerraformStateBucket,
+			"region":  TerraformStateRegion,
+			"key":     fmt.Sprintf("%s/%s/network/terraform.tfstate", t.Name(), uniqueId),
+			"encrypt": true,
 		},
 	}
 
@@ -37,12 +48,22 @@ func TestNetworkExamplePlan(t *testing.T) {
 func TestNetworkExample(t *testing.T) {
 	t.Parallel()
 
-	awsRegion := "ap-northeast-1"
+	awsRegion := TerraformStateRegion
+	uniqueId := random.UniqueId()
 
 	opts := &terraform.Options{
 		TerraformDir: "../_examples/network",
+		Reconfigure:  true,
+
 		Vars: map[string]interface{}{
-			"name": fmt.Sprintf("test-%s", random.UniqueId()),
+			"name": fmt.Sprintf("test-%s", uniqueId),
+		},
+
+		BackendConfig: map[string]interface{}{
+			"bucket":  TerraformStateBucket,
+			"region":  awsRegion,
+			"key":     fmt.Sprintf("%s/%s/network/terraform.tfstate", t.Name(), uniqueId),
+			"encrypt": true,
 		},
 	}
 
