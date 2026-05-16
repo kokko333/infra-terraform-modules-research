@@ -7,6 +7,11 @@ variable "db_name" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "RDS インスタンスをデプロイする VPC の ID"
+  type        = string
+}
+
 variable "subnet_ids" {
   description = "RDS インスタンスをデプロイするサブネット ID リスト"
   type        = list(string)

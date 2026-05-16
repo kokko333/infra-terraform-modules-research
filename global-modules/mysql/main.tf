@@ -16,8 +16,9 @@ resource "aws_db_subnet_group" "example" {
 }
 
 resource "aws_security_group" "rds" {
-  name = "${var.db_name}-rds"
-  tags = var.tags
+  name   = "${var.db_name}-rds"
+  vpc_id = var.vpc_id
+  tags   = var.tags
 }
 
 resource "aws_security_group_rule" "allow_from_app" {
