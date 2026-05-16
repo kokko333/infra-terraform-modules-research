@@ -8,6 +8,9 @@
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 *tfplan*
 
+# terregrunt
+*.terragrunt-cache/
+
 # Crash log files
 crash.log
 crash.*.log

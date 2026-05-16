@@ -12,6 +12,16 @@
 #                          aws ssm get-parameter \
 #                            --name /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id \
 #                            --region ap-northeast-1 --query "Parameter.Value" --output text
+#                     OR   aws ec2 describe-images \
+#                            --owners 099720109477 --region ap-northeast-1 \
+#                            --filters \
+#                              "Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*" \
+#                              "Name=state,Values=available" \
+#                            --query "sort_by(Images, &CreationDate)[-1].ImageId" \
+#                            --output text
+#                         ※　--owners 099720109477: Canonical（Ubuntu の公式 AWS アカウント ID）
+#                         ※　--filters: Ubuntu 24.04 (Noble) の gp3 AMI に絞り込み
+#                         ※　sort_by(Images, &CreationDate)[-1]: 最新のものを取得
 #
 # --- test-integration / test-integration-stages 実行時 ---
 #   TEST_STATE_S3_BUCKET : テスト用 Terraform state S3 バケット名
@@ -236,7 +246,7 @@ destroy-native:
 # =============================================================================
 
 deploy-tg:
-	cd $(TGRUNT_DIR) && terragrunt run-all apply
+	cd $(TGRUNT_DIR) && terragrunt run-all apply --terragrunt-non-interactive -auto-approve --terragrunt-download-dir C:/tgcache
 
 destroy-tg:
-	cd $(TGRUNT_DIR) && terragrunt run-all destroy
+	cd $(TGRUNT_DIR) && terragrunt run-all destroy --terragrunt-non-interactive -auto-approve --terragrunt-download-dir C:/tgcache
