@@ -45,9 +45,10 @@ validate_path_alb            := global-modules/alb
 validate_path_asg            := global-modules/asg
 validate_path_mysql          := global-modules/mysql
 validate_path_network        := global-modules/network
-validate_path_example-alb    := global-modules/_examples/alb
-validate_path_example-asg    := global-modules/_examples/asg
-validate_path_example-mysql  := global-modules/_examples/mysql
+validate_path_example-alb     := global-modules/_examples/alb
+validate_path_example-asg     := global-modules/_examples/asg
+validate_path_example-mysql   := global-modules/_examples/mysql
+validate_path_example-network := global-modules/_examples/network
 
 validate_path_hw-app         := hello-world-cluster/modules/hello-world-app
 validate_path_example-hw-app := hello-world-cluster/_examples/hello-world-app
@@ -58,7 +59,7 @@ validate_path_native-app     := hello-world-cluster/live/terraform-native/servic
 VALIDATE_TARGETS := \
 	state \
 	alb asg mysql network \
-	example-alb example-asg example-mysql \
+	example-alb example-asg example-mysql example-network \
 	hw-app example-hw-app \
 	native-network native-mysql native-app
 
@@ -70,22 +71,25 @@ VALIDATE_TARGETS := \
 example_path_asg         := global-modules/_examples/asg
 example_path_alb         := global-modules/_examples/alb
 example_path_mysql       := global-modules/_examples/mysql
+example_path_network     := global-modules/_examples/network
 
 example_path_hello-world := hello-world-cluster/_examples/hello-world-app
 
-EXAMPLE_TARGETS := asg alb mysql hello-world
+EXAMPLE_TARGETS := asg alb mysql network hello-world
 
 # =============================================================================
 # test-global パターンルール設定
 # テスト追加時: test_func_<名前> と GLOBAL_TEST_TARGETS を編集するだけでよい
 # =============================================================================
 
-test_func_alb      := TestAlbExample
-test_func_alb-plan := TestAlbExamplePlan
-test_func_asg      := TestAsgExample
-test_func_mysql    := TestMySqlExample
+test_func_network      := TestNetworkExample
+test_func_network-plan := TestNetworkExamplePlan
+test_func_alb          := TestAlbExample
+test_func_alb-plan     := TestAlbExamplePlan
+test_func_asg          := TestAsgExample
+test_func_mysql        := TestMySqlExample
 
-GLOBAL_TEST_TARGETS := alb alb-plan asg mysql
+GLOBAL_TEST_TARGETS := network network-plan alb alb-plan asg mysql
 
 # =============================================================================
 # .PHONY
