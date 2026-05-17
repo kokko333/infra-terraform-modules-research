@@ -55,6 +55,9 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ steps.tf-version.outputs.version }}
+          # デフォルト有効のラッパースクリプトが terraform output -json の stdout に
+          # 余分な出力を混入させ、terratest の JSON パースが失敗するため無効化する
+          terraform_wrapper: false
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
