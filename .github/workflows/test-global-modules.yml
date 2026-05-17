@@ -1,0 +1,67 @@
+# =============================================================================
+# global-modules/_tests 統合テストワークフロー
+#
+# トリガー: "test-global-github" を含むタグがプッシュされた場合
+#   例: test-global-github-260131
+#
+# 事前設定 (GitHub リポジトリの Settings > Secrets and variables):
+#   Secrets:
+#     AWS_ROLE_ARN  : OIDC で引き受ける IAM ロールの ARN
+#
+# Terraform バージョンはリポジトリルートの .terraform-version から自動取得します。
+#
+# AWS 側の OIDC 設定:
+#   1. IAM > Identity providers > Add provider
+#      Provider URL: https://token.actions.githubusercontent.com
+#      Audience (対象者): sts.amazonaws.com
+#   2. 上記プロバイダーを信頼する IAM ロールを作成し、ARN を AWS_ROLE_ARN に設定
+# =============================================================================
+
+name: Test Global Modules
+
+on:
+  push:
+    tags:
+      - "*test-global-github*"
+
+env:
+  AWS_REGION: ap-northeast-1
+
+permissions:
+  id-token: write # OIDC トークン取得に必要
+  contents: read
+
+jobs:
+  test-global-modules:
+    name: Integration tests for global-modules
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: global-modules/_tests/go.mod
+          cache-dependency-path: global-modules/_tests/go.sum
+
+      - name: Read Terraform version
+        id: tf-version
+        run: echo "version=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ steps.tf-version.outputs.version }}
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run global-modules integration tests
+        working-directory: global-modules/_tests
+        run: go test -v -timeout 30m ./...

@@ -1,0 +1,64 @@
+# =============================================================================
+# global-modules/_tests 統合テストパイプライン
+#
+# トリガー: "test-global-circle" を含むタグがプッシュされた場合
+#   例: test-global-circle-260131
+#
+# 事前設定 (CircleCI プロジェクト設定 > Environment Variables):
+#   AWS_ROLE_ARN  : OIDC で引き受ける IAM ロールの ARN
+#
+# Terraform バージョンはリポジトリルートの .terraform-version から自動取得します。
+#
+# AWS 側の OIDC 設定:
+#   1. IAM > Identity providers > Add provider
+#      Provider URL: https://oidc.circleci.com/org/<CircleCI-Organization-ID>
+#      Audience (対象者): <CircleCI-Organization-ID>
+#      ※ Organization ID は CircleCI > Organization Settings > Overview で確認
+#   2. 上記プロバイダーを信頼する IAM ロールを作成し、ARN を AWS_ROLE_ARN に設定
+# =============================================================================
+
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@4.1
+
+executors:
+  go-executor:
+    docker:
+      - image: cimg/go:1.26
+    resource_class: medium
+
+jobs:
+  test-global-modules:
+    executor: go-executor
+    steps:
+      - checkout
+
+      - aws-cli/setup:
+          role_arn: "${AWS_ROLE_ARN}"
+          aws_region: ap-northeast-1
+
+      - run:
+          name: Install Terraform
+          command: |
+            TF_VERSION=$(cat .terraform-version)
+            wget -q "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
+            unzip -q "terraform_${TF_VERSION}_linux_amd64.zip"
+            sudo install -m 0755 terraform /usr/local/bin/terraform
+            terraform version
+
+      - run:
+          name: Run global-modules integration tests
+          working_directory: global-modules/_tests
+          command: go test -v -timeout 30m ./...
+          no_output_timeout: 35m
+
+workflows:
+  test-global-modules:
+    jobs:
+      - test-global-modules:
+          filters:
+            branches:
+              ignore: /.*/ # ブランチプッシュでは起動しない
+            tags:
+              only: /.*test-global-circle.*/
