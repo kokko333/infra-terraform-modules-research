@@ -67,4 +67,5 @@ jobs:
 
       - name: Run global-modules integration tests
         working-directory: global-modules/_tests
-        run: go test -v -timeout 30m ./...
+        # -parallel 1: 同一ディレクトリを共有するテスト間のロック競合を防ぐ
+        run: go test -v -timeout 30m -parallel 1 ./...

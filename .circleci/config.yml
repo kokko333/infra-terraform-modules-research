@@ -51,7 +51,8 @@ jobs:
       - run:
           name: Run global-modules integration tests
           working_directory: global-modules/_tests
-          command: go test -v -timeout 30m ./...
+          # -parallel 1: 同一ディレクトリを共有するテスト間のロック競合を防ぐ
+          command: go test -v -timeout 30m -parallel 1 ./...
           no_output_timeout: 35m
 
 workflows:
