@@ -112,7 +112,8 @@ GLOBAL_TEST_TARGETS := network network-plan alb alb-plan asg mysql
 	$(addprefix destroy-example-,$(EXAMPLE_TARGETS)) \
 	test-example test-integration test-integration-stages test-opa \
 	deploy-native destroy-native \
-	deploy-tg destroy-tg
+	deploy-tg destroy-tg \
+	drift drift-native drift-tg
 
 # =============================================================================
 # state チェック
@@ -259,3 +260,30 @@ deploy-tg:
 
 destroy-tg:
 	cd $(TGRUNT_DIR) && terragrunt run-all destroy --terragrunt-non-interactive -auto-approve --terragrunt-download-dir C:/tgcache
+
+# =============================================================================
+# drift 検知 — 手動変更のみを表示 (コード差分は含まない)
+# -refresh-only: state と実環境の差分だけを plan する
+# drift:        terraform-native と terragrunt の両方をチェック
+# drift-native: terraform-native 配下の各モジュールを個別にチェック
+# drift-tg:     terragrunt run-all で全モジュールをまとめてチェック
+# =============================================================================
+
+drift: drift-native drift-tg
+
+drift-native:
+	terraform -chdir=$(NATIVE_DIR)/network init -backend-config=$(BACKEND_CONFIG) -input=false
+	terraform -chdir=$(NATIVE_DIR)/network plan -refresh-only
+	terraform -chdir=$(NATIVE_DIR)/data-stores/mysql init -backend-config=$(BACKEND_CONFIG) -input=false
+	terraform -chdir=$(NATIVE_DIR)/data-stores/mysql plan -refresh-only \
+		-var network_remote_state_bucket=$(STATE_BUCKET) \
+		-var network_remote_state_key=$(NETWORK_STATE_KEY)
+	terraform -chdir=$(NATIVE_DIR)/services/hello-world-app init -backend-config=$(BACKEND_CONFIG) -input=false
+	terraform -chdir=$(NATIVE_DIR)/services/hello-world-app plan -refresh-only \
+		-var network_remote_state_bucket=$(STATE_BUCKET) \
+		-var network_remote_state_key=$(NETWORK_STATE_KEY) \
+		-var db_remote_state_bucket=$(STATE_BUCKET) \
+		-var db_remote_state_key=$(DB_STATE_KEY)
+
+drift-tg:
+	cd $(TGRUNT_DIR) && terragrunt run-all plan -refresh-only --terragrunt-non-interactive --terragrunt-download-dir C:/tgcache
